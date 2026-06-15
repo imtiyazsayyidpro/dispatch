@@ -93,26 +93,42 @@ async function createJob(
   return job;
 }
 
+// API-key authenticated cancellation (developer-facing) — scoped to the key's project.
 async function cancelJob(projectId: string, jobId: string) {
-  const job = await prisma.job.findFirst({
-    where: { id: jobId },
-  });
+  const job = await prisma.job.findFirst({ where: { id: jobId } });
 
-  // Scoped to the API key's project — cancellation is API-key authenticated.
   if (!job || job.projectId !== projectId) {
     throw new AppError('Job not found', statusCodes.NOT_FOUND);
   }
 
+  await applyCancellation(job);
+}
+
+// Session authenticated cancellation (dashboard) — scoped to the owning user.
+async function cancelJobForUser(userId: string, jobId: string) {
+  const job = await prisma.job.findFirst({
+    where: { id: jobId },
+    include: { project: true },
+  });
+
+  if (!job || job.project.userId !== userId) {
+    throw new AppError('Job not found', statusCodes.NOT_FOUND);
+  }
+
+  await applyCancellation(job);
+}
+
+async function applyCancellation(job: { id: string; status: string }) {
   if (job.status !== 'SCHEDULED') {
     throw new AppError('Only scheduled jobs can be cancelled', statusCodes.BAD_REQUEST);
   }
 
   await prisma.job.update({
-    where: { id: jobId },
+    where: { id: job.id },
     data: { status: 'CANCELLED' },
   });
 
-  cancelScheduledJob(jobId);
+  cancelScheduledJob(job.id);
 }
 
 export const jobService = {
@@ -120,4 +136,5 @@ export const jobService = {
   getSingleJob,
   createJob,
   cancelJob,
+  cancelJobForUser,
 };

@@ -9,11 +9,12 @@ import { JobStatusBadge } from "@/components/app/job-status-badge";
 import { NewApiKeyModal } from "@/components/app/new-api-key-modal";
 import { Button } from "@/components/ui/button";
 import { ErrorPanel } from "@/components/app/error-panel";
+import { LocalTime } from "@/components/app/local-time";
 import { Panel } from "@/components/app/panel";
 import { Scan, ScanList } from "@/components/app/scan";
 import { TickRule } from "@/components/app/tick-rule";
 import * as api from "@/lib/api";
-import { formatDate, formatDateTime, formatRelative } from "@/lib/format";
+import { formatDate, formatRelative } from "@/lib/format";
 import type { ApiKey, Job, JobsPage, Project } from "@/lib/types";
 
 const EASE: [number, number, number, number] = [0.21, 0.65, 0.36, 1];
@@ -249,7 +250,7 @@ function RecentJobsSection({
                   {job.webhookUrl}
                 </span>
                 <span className="ml-auto shrink-0 font-mono text-xs text-zinc-400 tabular-nums">
-                  {formatDateTime(job.fireAt)}
+                  <LocalTime iso={job.fireAt} />
                 </span>
               </li>
             ))}

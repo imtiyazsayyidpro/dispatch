@@ -3,18 +3,19 @@
 import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowLeft, RefreshCw, TerminalSquare, X } from "lucide-react";
+import { ArrowLeft, RefreshCw } from "lucide-react";
 
 import { JobStatusBadge } from "@/components/app/job-status-badge";
 import { LogTimeline } from "@/components/app/log-timeline";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/app/confirm-dialog";
 import { Countdown } from "@/components/app/countdown";
 import { ErrorPanel } from "@/components/app/error-panel";
-import { Panel } from "@/components/app/panel";
+import { LocalTime } from "@/components/app/local-time";
 import { Scan } from "@/components/app/scan";
 import { TickRule } from "@/components/app/tick-rule";
 import * as api from "@/lib/api";
-import { formatDateTime, formatRelative } from "@/lib/format";
+import { formatRelative } from "@/lib/format";
 import type { JobDetail } from "@/lib/types";
 
 const EASE: [number, number, number, number] = [0.21, 0.65, 0.36, 1];
@@ -75,56 +76,62 @@ function MetaRow({ label, children }: { label: string; children: React.ReactNode
 }
 
 /**
- * DELETE /jobs/:id is API-key authenticated, so the dashboard session can't
- * cancel a job. The button opens an inline explainer with the curl command
- * instead of firing a request that would 401.
+ * Cancels a scheduled job from the dashboard (session-authenticated). Opens a
+ * confirmation dialog first, then refreshes the job so its status flips to
+ * CANCELLED and this control disappears.
  */
-function CancelSection({ jobId }: { jobId: string }) {
+function CancelJobControl({
+  jobId,
+  onCancelled,
+}: {
+  jobId: string;
+  onCancelled: () => void | Promise<void>;
+}) {
   const [open, setOpen] = useState(false);
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "https://your-dispatch-host";
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!open) {
-    return (
-      <Button variant="destructive" size="sm" onClick={() => setOpen(true)}>
-        Cancel job
-      </Button>
-    );
+  async function confirm() {
+    setLoading(true);
+    setError(null);
+    try {
+      await api.post(`/api/v1/jobs/${jobId}/cancel`);
+      await onCancelled();
+      setOpen(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not cancel the job");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <Panel className="p-5">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <TerminalSquare className="mt-0.5 size-4 shrink-0 text-amber-400" />
-          <div>
-            <p className="text-sm font-medium text-zinc-200">
-              Cancelling from the dashboard isn&apos;t supported yet
-            </p>
-            <p className="mt-1.5 max-w-lg text-sm leading-relaxed text-zinc-400">
-              Job cancellation is authenticated with your project API key, the
-              same way jobs are created. Run this with the key that scheduled
-              the job:
-            </p>
-          </div>
-        </div>
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          aria-label="Dismiss"
-          onClick={() => setOpen(false)}
-          className="text-zinc-500 hover:text-zinc-200"
-        >
-          <X />
-        </Button>
-      </div>
-      <pre className="mt-4 overflow-x-auto rounded-sm border border-zinc-800/70 bg-zinc-950/80 px-4 py-3 font-mono text-xs leading-6 text-zinc-400">
-        {`curl -X DELETE ${apiUrl}/api/v1/jobs/${jobId} \\
-  -H "x-api-key: sk_..."`}
-      </pre>
-      <p className="mt-3 font-mono text-xs text-zinc-600">
-        only SCHEDULED jobs can be cancelled
-      </p>
-    </Panel>
+    <>
+      <Button variant="destructive" size="sm" onClick={() => setOpen(true)}>
+        Cancel job
+      </Button>
+      <ConfirmDialog
+        open={open}
+        title="Cancel this job?"
+        description={
+          <>
+            This stops the scheduled webhook from ever firing. It can&apos;t be
+            undone — you&apos;d have to schedule a new job.
+          </>
+        }
+        confirmLabel="Cancel job"
+        cancelLabel="Keep it"
+        destructive
+        loading={loading}
+        error={error}
+        onConfirm={confirm}
+        onClose={() => {
+          if (loading) return;
+          setOpen(false);
+          setError(null);
+        }}
+      />
+    </>
   );
 }
 
@@ -252,9 +259,7 @@ export default function JobDetailPage({
                   </span>
                 </MetaRow>
                 <MetaRow label="fires at">
-                  <span className="tabular-nums">
-                    {formatDateTime(job.fireAt)}
-                  </span>
+                  <LocalTime iso={job.fireAt} className="tabular-nums" />
                   {job.status === "SCHEDULED" &&
                   new Date(job.fireAt).getTime() > Date.now() ? (
                     <span className="ml-3">
@@ -263,9 +268,7 @@ export default function JobDetailPage({
                   ) : null}
                 </MetaRow>
                 <MetaRow label="created">
-                  <span className="tabular-nums">
-                    {formatDateTime(job.createdAt)}
-                  </span>
+                  <LocalTime iso={job.createdAt} className="tabular-nums" />
                   <span className="ml-2 font-mono text-xs text-zinc-600">
                     {formatRelative(job.createdAt)}
                   </span>
@@ -287,7 +290,7 @@ export default function JobDetailPage({
 
               {job.status === "SCHEDULED" ? (
                 <div className="mt-5">
-                  <CancelSection jobId={job.id} />
+                  <CancelJobControl jobId={job.id} onCancelled={load} />
                 </div>
               ) : null}
             </section>

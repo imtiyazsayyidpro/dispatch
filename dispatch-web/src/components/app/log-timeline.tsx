@@ -5,7 +5,7 @@ import { Ban, Check, ChevronDown, Clock3, RotateCcw, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/app/panel";
-import { formatDateTime } from "@/lib/format";
+import { LocalTime } from "@/components/app/local-time";
 import type { JobLog, JobStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -102,7 +102,7 @@ function AttemptEntry({ log }: { log: JobLog }) {
           {log.responseCode !== null ? ` · HTTP ${log.responseCode}` : ""}
         </p>
         <p className="ml-auto font-mono text-xs text-zinc-600 tabular-nums">
-          {formatDateTime(log.firedAt)}
+          <LocalTime iso={log.firedAt} />
         </p>
       </div>
 
@@ -168,7 +168,7 @@ export function LogTimeline({
           <p className="mt-1 text-sm text-zinc-400">
             First attempt scheduled for{" "}
             <span className="font-mono text-xs text-sky-400 tabular-nums">
-              {formatDateTime(fireAt)}
+              <LocalTime iso={fireAt} />
             </span>
             . Attempts will appear here as they happen.
           </p>

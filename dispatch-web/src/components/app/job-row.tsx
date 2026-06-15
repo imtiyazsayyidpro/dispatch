@@ -4,7 +4,8 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
 import { JobStatusBadge } from "@/components/app/job-status-badge";
-import { formatDateTime, formatRelative } from "@/lib/format";
+import { LocalTime } from "@/components/app/local-time";
+import { formatRelative } from "@/lib/format";
 import type { Job } from "@/lib/types";
 
 /**
@@ -43,7 +44,7 @@ export function JobRow({ job }: { job: Job }) {
 
       <div className="hidden shrink-0 text-right sm:block">
         <p className="font-mono text-xs text-zinc-200 tabular-nums">
-          {formatDateTime(job.fireAt)}
+          <LocalTime iso={job.fireAt} />
         </p>
         <p className="mt-0.5 font-mono text-xs text-zinc-600">
           created {formatRelative(job.createdAt)}

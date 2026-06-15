@@ -59,9 +59,24 @@ async function cancelJob(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+// Dashboard cancellation — session authenticated, scoped to the logged-in user.
+async function cancelJobAsUser(req: Request, res: Response, next: NextFunction) {
+  try {
+    await jobService.cancelJobForUser(req.user.id, req.params.id as string);
+    return sendResponse({
+      res,
+      status: true,
+      message: 'Job cancelled successfully',
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export const jobController = {
   getAllJobs,
   getSingleJob,
   createJob,
   cancelJob,
+  cancelJobAsUser,
 };

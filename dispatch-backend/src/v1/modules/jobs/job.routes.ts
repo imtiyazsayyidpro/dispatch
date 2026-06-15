@@ -14,5 +14,6 @@ jobRouter.delete('/:id', authenticateApiKey, validateParams(jobParamsSchema), jo
 // Session auth — dashboard facing
 jobRouter.get('/', authenticate, validateQuery(jobQuerySchema), jobController.getAllJobs);
 jobRouter.get('/:id', authenticate, validateParams(jobParamsSchema), jobController.getSingleJob);
+jobRouter.post('/:id/cancel', authenticate, validateParams(jobParamsSchema), jobController.cancelJobAsUser);
 
 export default jobRouter;
