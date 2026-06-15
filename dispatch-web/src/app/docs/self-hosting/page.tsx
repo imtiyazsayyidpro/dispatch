@@ -5,19 +5,11 @@ import { AgentPrompt } from "@/components/docs/agent-prompt";
 import { CodeBlock } from "@/components/docs/code-block";
 import type { DocSectionLink } from "@/components/docs/docs-nav";
 import { DocsShell } from "@/components/docs/docs-shell";
-import {
-  Callout,
-  DocSection,
-  Field,
-  FieldList,
-  K,
-  P,
-} from "@/components/docs/primitives";
+import { Callout, DocSection, Field, FieldList, K, P } from "@/components/docs/primitives";
 
 export const metadata: Metadata = {
   title: "Self-hosting — Dispatch Docs",
-  description:
-    "Run Dispatch on your own server: installation, environment variables, PM2, nginx, upgrades, and known limitations.",
+  description: "Run Dispatch on your own server: installation, environment variables, PM2, nginx, upgrades, and known limitations.",
 };
 
 const SECTIONS: DocSectionLink[] = [
@@ -99,23 +91,18 @@ function Overview() {
     >
       <div className="grid max-w-3xl gap-4 sm:grid-cols-2">
         <Panel className="p-5">
-          <p className="font-mono text-[10px] tracking-[0.2em] text-emerald-400 uppercase">
-            what you get
-          </p>
+          <p className="font-mono text-[10px] tracking-[0.2em] text-emerald-400 uppercase">what you get</p>
           <ul className="mt-3 space-y-2 text-[13px] leading-relaxed text-zinc-400">
             <li>The full product, MIT-licensed — not a gutted community edition</li>
             <li>Every job, payload, and delivery log in your own database</li>
             <li>
-              Webhooks that can reach services inside your network — opt in with{" "}
-              <K>ALLOW_PRIVATE_WEBHOOKS</K>
+              Webhooks that can reach services inside your network — opt in with <K>ALLOW_PRIVATE_WEBHOOKS</K>
             </li>
             <li>No usage limits beyond what your server can do</li>
           </ul>
         </Panel>
         <Panel className="p-5">
-          <p className="font-mono text-[10px] tracking-[0.2em] text-zinc-500 uppercase">
-            what you own
-          </p>
+          <p className="font-mono text-[10px] tracking-[0.2em] text-zinc-500 uppercase">what you own</p>
           <ul className="mt-3 space-y-2 text-[13px] leading-relaxed text-zinc-400">
             <li>Database backups and credentials</li>
             <li>TLS, DNS, and the reverse proxy in front</li>
@@ -153,23 +140,14 @@ const PREREQS: { name: string; note: React.ReactNode }[] = [
 
 function Prerequisites() {
   return (
-    <DocSection
-      index={sectionIndex("prerequisites")}
-      id="prerequisites"
-      eyebrow="prerequisites"
-      title="What you need first"
-    >
+    <DocSection index={sectionIndex("prerequisites")} id="prerequisites" eyebrow="prerequisites" title="What you need first">
       <Panel className="max-w-3xl divide-y divide-zinc-800/50">
         {PREREQS.map((item, i) => (
           <div key={item.name} className="flex items-baseline gap-4 px-5 py-3.5">
-            <span className="shrink-0 font-mono text-[10px] tracking-wider text-amber-400">
-              {String(i + 1).padStart(2, "0")}
-            </span>
+            <span className="shrink-0 font-mono text-[10px] tracking-wider text-amber-400">{String(i + 1).padStart(2, "0")}</span>
             <div>
               <p className="text-sm font-medium text-zinc-100">{item.name}</p>
-              <p className="mt-1 text-[13px] leading-relaxed text-zinc-400">
-                {item.note}
-              </p>
+              <p className="mt-1 text-[13px] leading-relaxed text-zinc-400">{item.note}</p>
             </div>
           </div>
         ))}
@@ -239,49 +217,29 @@ function Installation() {
       lead="The repo holds both apps side by side: dispatch-backend (the API and scheduler) and dispatch-web (the dashboard)."
     >
       <div className="space-y-3">
-        <p className="font-mono text-[10px] tracking-[0.2em] text-zinc-600 uppercase">
-          01 · clone
-        </p>
+        <p className="font-mono text-[10px] tracking-[0.2em] text-zinc-600 uppercase">01 · clone</p>
         <CodeBlock code={INSTALL_CLONE} lang="bash" className="max-w-3xl" />
       </div>
 
       <div className="space-y-3">
-        <p className="font-mono text-[10px] tracking-[0.2em] text-zinc-600 uppercase">
-          02 · configure the api
-        </p>
+        <p className="font-mono text-[10px] tracking-[0.2em] text-zinc-600 uppercase">02 · configure the api</p>
         <P>
-          Create a MySQL database (and ideally a dedicated user), then copy{" "}
-          <K>.env.example</K> to <K>.env</K> and fill it in. Every variable is
-          documented in the{" "}
+          Create a MySQL database (and ideally a dedicated user), then copy <K>.env.example</K> to <K>.env</K> and fill it in. Every variable is documented in the{" "}
           <a href="#env-reference" className="text-amber-400 hover:underline">
             reference
           </a>{" "}
           below.
         </P>
-        <CodeBlock
-          code={INSTALL_BACKEND_ENV}
-          lang="ini"
-          title="dispatch-backend/.env"
-          className="max-w-3xl"
-        />
+        <CodeBlock code={INSTALL_BACKEND_ENV} lang="ini" title="dispatch-backend/.env" className="max-w-3xl" />
       </div>
 
       <div className="space-y-3">
-        <p className="font-mono text-[10px] tracking-[0.2em] text-zinc-600 uppercase">
-          03 · configure the dashboard
-        </p>
-        <CodeBlock
-          code={INSTALL_WEB_ENV}
-          lang="ini"
-          title="dispatch-web/.env.local"
-          className="max-w-3xl"
-        />
+        <p className="font-mono text-[10px] tracking-[0.2em] text-zinc-600 uppercase">03 · configure the dashboard</p>
+        <CodeBlock code={INSTALL_WEB_ENV} lang="ini" title="dispatch-web/.env.local" className="max-w-3xl" />
       </div>
 
       <div className="space-y-3">
-        <p className="font-mono text-[10px] tracking-[0.2em] text-zinc-600 uppercase">
-          04 · migrate and build
-        </p>
+        <p className="font-mono text-[10px] tracking-[0.2em] text-zinc-600 uppercase">04 · migrate and build</p>
         <CodeBlock code={INSTALL_BUILD} lang="bash" className="max-w-3xl" />
       </div>
     </DocSection>
@@ -296,7 +254,7 @@ const PM2_ECOSYSTEM = `// ecosystem.config.js — at the repo root
 module.exports = {
   apps: [
     {
-      name: "dispatch-api",
+      name: "api-dispatch",
       cwd: "./dispatch-backend",
       script: "npm",
       args: "start",
@@ -325,7 +283,7 @@ pm2 save        # persist the process list
 pm2 startup     # then run the command it prints — survives reboots
 
 pm2 status      # both apps should read "online"
-pm2 logs dispatch-api`;
+pm2 logs api-dispatch`;
 
 function Production() {
   return (
@@ -336,22 +294,13 @@ function Production() {
       title="PM2 keeps both alive"
       lead="One ecosystem file declares both processes; PM2 restarts them on crash and on reboot."
     >
-      <CodeBlock
-        code={PM2_ECOSYSTEM}
-        lang="js"
-        title="ecosystem.config.js"
-        className="max-w-3xl"
-      />
+      <CodeBlock code={PM2_ECOSYSTEM} lang="js" title="ecosystem.config.js" className="max-w-3xl" />
       <CodeBlock code={PM2_START} lang="bash" className="max-w-3xl" />
 
       <Callout tone="info" legend="scaling the api" className="max-w-3xl">
-        One API instance is plenty for a single box, but Dispatch is safe to
-        scale: every job is claimed atomically (<K>SCHEDULED → FIRING</K> in a
-        single conditional update) before it fires, so two instances will never
-        double-send a webhook. The only caveat is that rate limiting is
-        in-memory per process — add a shared store (e.g. Redis) if you want
-        limits enforced globally across replicas. The dashboard is stateless;
-        scale it freely.
+        One API instance is plenty for a single box, but Dispatch is safe to scale: every job is claimed atomically (<K>SCHEDULED → FIRING</K> in a single conditional update) before it fires, so two instances will never
+        double-send a webhook. The only caveat is that rate limiting is in-memory per process — add a shared store (e.g. Redis) if you want limits enforced globally across replicas. The dashboard is stateless; scale it
+        freely.
       </Callout>
     </DocSection>
   );
@@ -408,27 +357,15 @@ function ReverseProxy() {
       title="nginx in front of both"
       lead="The dashboard's browser code calls the API directly, so both have to be publicly reachable. Path-based routing puts them behind one domain — the simplest option, and it sidesteps CORS entirely."
     >
-      <CodeBlock
-        code={NGINX_CONF}
-        lang="nginx"
-        title="/etc/nginx/sites-available/dispatch"
-        className="max-w-3xl"
-      />
+      <CodeBlock code={NGINX_CONF} lang="nginx" title="/etc/nginx/sites-available/dispatch" className="max-w-3xl" />
       <CodeBlock code={NGINX_ENABLE} lang="bash" className="max-w-3xl" />
       <P>
-        Because the API is reached at the same origin as the dashboard,{" "}
-        <K>NEXT_PUBLIC_API_URL</K> is simply{" "}
-        <K>https://dispatch.example.com</K> — the web app appends{" "}
-        <K>/api/v1/…</K> paths itself, and same-origin requests need no CORS
-        config.
+        Because the API is reached at the same origin as the dashboard, <K>NEXT_PUBLIC_API_URL</K> is simply <K>https://dispatch.example.com</K> — the web app appends <K>/api/v1/…</K> paths itself, and same-origin
+        requests need no CORS config.
       </P>
       <Callout tone="info" legend="prefer separate domains?" className="max-w-3xl">
-        You can instead give the API and dashboard their own domains (e.g.{" "}
-        <K>api.example.com</K> and <K>app.example.com</K>) with a server block
-        each. Two extra steps then matter: set{" "}
-        <K>NEXT_PUBLIC_API_URL</K> to the API&apos;s domain, and list the
-        dashboard&apos;s origin in <K>CORS_ORIGINS</K> on the API — otherwise
-        the browser blocks the cross-origin calls.
+        You can instead give the API and dashboard their own domains (e.g. <K>api.example.com</K> and <K>app.example.com</K>) with a server block each. Two extra steps then matter: set <K>NEXT_PUBLIC_API_URL</K> to the
+        API&apos;s domain, and list the dashboard&apos;s origin in <K>CORS_ORIGINS</K> on the API — otherwise the browser blocks the cross-origin calls.
       </Callout>
     </DocSection>
   );
@@ -449,56 +386,40 @@ function EnvReference() {
     >
       <FieldList title="dispatch-backend/.env">
         <Field name="DATABASE_URL" type="string · mysql url" required>
-          MySQL/MariaDB connection string, used by Prisma at runtime and by{" "}
-          <K>prisma migrate</K>. Example:{" "}
-          <K>mysql://dispatch:secret@localhost:3306/dispatch</K>
+          MySQL/MariaDB connection string, used by Prisma at runtime and by <K>prisma migrate</K>. Example: <K>mysql://dispatch:secret@localhost:3306/dispatch</K>
         </Field>
         <Field name="PORT" type="number · default 4000">
-          Port the API listens on. Keep it in sync with the nginx upstream.
-          Example: <K>4000</K>
+          Port the API listens on. Keep it in sync with the nginx upstream. Example: <K>4000</K>
         </Field>
         <Field name="GMAIL_USER" type="string · email" required>
-          Gmail address that sends verification codes and reset links. Signup
-          fails without working email. Example: <K>you@gmail.com</K>
+          Gmail address that sends verification codes and reset links. Signup fails without working email. Example: <K>you@gmail.com</K>
         </Field>
         <Field name="GMAIL_APP_PASSWORD" type="string" required>
           A 16-character Google{" "}
-          <a
-            href="https://myaccount.google.com/apppasswords"
-            className="text-amber-400 hover:underline"
-          >
+          <a href="https://myaccount.google.com/apppasswords" className="text-amber-400 hover:underline">
             App Password
           </a>{" "}
           — not your normal account password.
         </Field>
         <Field name="FRONTEND_URL" type="string · url" required>
-          Public origin of the dashboard, used to build links inside emails
-          (password reset). Example: <K>https://dispatch.example.com</K>
+          Public origin of the dashboard, used to build links inside emails (password reset). Example: <K>https://dispatch.example.com</K>
         </Field>
         <Field name="CORS_ORIGINS" type="string · csv">
-          Comma-separated browser origins allowed to call the API. Only needed
-          when the dashboard is on a different origin than the API; localhost is
-          auto-allowed in development. Example:{" "}
+          Comma-separated browser origins allowed to call the API. Only needed when the dashboard is on a different origin than the API; localhost is auto-allowed in development. Example:{" "}
           <K>https://dispatch.example.com</K>
         </Field>
         <Field name="TRUST_PROXY" type="boolean · default off">
-          Set <K>true</K> when behind a reverse proxy so rate limiting and logs
-          use the real client IP from <K>X-Forwarded-For</K>.
+          Set <K>true</K> when behind a reverse proxy so rate limiting and logs use the real client IP from <K>X-Forwarded-For</K>.
         </Field>
         <Field name="ALLOW_PRIVATE_WEBHOOKS" type="boolean · default off">
-          When unset, the API blocks webhooks pointed at private/internal
-          addresses (an SSRF guard). Set <K>true</K> only if you intentionally
-          fire at services inside your own network.
+          When unset, the API blocks webhooks pointed at private/internal addresses (an SSRF guard). Set <K>true</K> only if you intentionally fire at services inside your own network.
         </Field>
       </FieldList>
 
       <FieldList title="dispatch-web/.env.local">
         <Field name="NEXT_PUBLIC_API_URL" type="string · origin" required>
-          Public origin the browser uses to reach the API — with the
-          path-routed nginx setup, the same origin as the dashboard. No
-          trailing slash, no <K>/api/v1</K> suffix. Inlined at build time:
-          it must be set before <K>next build</K>, and a change requires a
-          rebuild. Example: <K>https://dispatch.example.com</K>
+          Public origin the browser uses to reach the API — with the path-routed nginx setup, the same origin as the dashboard. No trailing slash, no <K>/api/v1</K> suffix. Inlined at build time: it must be set before{" "}
+          <K>next build</K>, and a change requires a rebuild. Example: <K>https://dispatch.example.com</K>
         </Field>
       </FieldList>
     </DocSection>
@@ -552,73 +473,33 @@ function LocalDevelopment() {
       title="Developing against Dispatch"
       lead="Both halves run locally in dev mode, and there's a well-worn answer to testing webhooks on localhost."
     >
-      <CodeBlock
-        code={LOCAL_DEV}
-        lang="bash"
-        title="dev setup"
-        className="max-w-3xl"
-      />
+      <CodeBlock code={LOCAL_DEV} lang="bash" title="dev setup" className="max-w-3xl" />
 
       <div className="space-y-3">
-        <p className="font-mono text-[10px] tracking-[0.2em] text-zinc-600 uppercase">
-          testing webhooks locally
-        </p>
+        <p className="font-mono text-[10px] tracking-[0.2em] text-zinc-600 uppercase">testing webhooks locally</p>
         <P>
-          The question every developer hits first: &quot;my handler runs on
-          my laptop — what do I put in <K>webhookUrl</K>?&quot; It depends
-          on where Dispatch is running:
+          The question every developer hits first: &quot;my handler runs on my laptop — what do I put in <K>webhookUrl</K>?&quot; It depends on where Dispatch is running:
         </P>
         <P>
-          <strong className="font-medium text-zinc-200">
-            Dispatch running locally too?
-          </strong>{" "}
-          The scheduler fires from the backend process on your machine, so{" "}
-          <K>http://localhost:5000/hooks/test</K> works as a <K>webhookUrl</K>{" "}
-          directly — but note that loopback and private addresses are blocked
-          by default, so set <K>ALLOW_PRIVATE_WEBHOOKS=true</K> in your local{" "}
-          <K>.env</K> first.
+          <strong className="font-medium text-zinc-200">Dispatch running locally too?</strong> The scheduler fires from the backend process on your machine, so <K>http://localhost:5000/hooks/test</K> works as a{" "}
+          <K>webhookUrl</K> directly — but note that loopback and private addresses are blocked by default, so set <K>ALLOW_PRIVATE_WEBHOOKS=true</K> in your local <K>.env</K> first.
         </P>
         <P>
-          <strong className="font-medium text-zinc-200">
-            Dispatch hosted somewhere else?
-          </strong>{" "}
-          It can&apos;t reach your localhost — you need a tunnel. ngrok is
-          the standard move (and its public URL passes the SSRF guard):
+          <strong className="font-medium text-zinc-200">Dispatch hosted somewhere else?</strong> It can&apos;t reach your localhost — you need a tunnel. ngrok is the standard move (and its public URL passes the SSRF
+          guard):
         </P>
         <CodeBlock code={NGROK_SETUP} lang="bash" className="max-w-3xl" />
-        <CodeBlock
-          code={NGROK_OUTPUT}
-          lang="text"
-          title="ngrok output"
-          className="max-w-3xl"
-        />
-        <CodeBlock
-          code={NGROK_USE}
-          lang="bash"
-          title="schedule against the tunnel"
-          className="max-w-3xl"
-        />
+        <CodeBlock code={NGROK_OUTPUT} lang="text" title="ngrok output" className="max-w-3xl" />
+        <CodeBlock code={NGROK_USE} lang="bash" title="schedule against the tunnel" className="max-w-3xl" />
       </div>
 
       <Callout tone="info" legend="ngrok field notes" className="max-w-3xl">
         <ul className="space-y-1.5">
+          <li>On the free plan the forwarding URL changes every restart — jobs scheduled against a dead tunnel will fail and retry into the void. Claim ngrok&apos;s free static domain so the URL survives restarts.</li>
           <li>
-            On the free plan the forwarding URL changes every restart —
-            jobs scheduled against a dead tunnel will fail and retry into
-            the void. Claim ngrok&apos;s free static domain so the URL
-            survives restarts.
+            The web interface at <K>http://127.0.0.1:4040</K> shows every delivery ngrok forwarded — request body, your response, timing. It pairs perfectly with the Dispatch delivery log for debugging both sides.
           </li>
-          <li>
-            The web interface at <K>http://127.0.0.1:4040</K> shows every
-            delivery ngrok forwarded — request body, your response, timing.
-            It pairs perfectly with the Dispatch delivery log for debugging
-            both sides.
-          </li>
-          <li>
-            Deliveries that failed while your tunnel was down are retried
-            on the normal 30s → 1m → 5m backoff, so a quick tunnel restart
-            often catches the retry.
-          </li>
+          <li>Deliveries that failed while your tunnel was down are retried on the normal 30s → 1m → 5m backoff, so a quick tunnel restart often catches the retry.</li>
         </ul>
       </Callout>
     </DocSection>
@@ -644,7 +525,7 @@ npm install
 npm run build
 
 # restart both
-pm2 restart dispatch-api dispatch-web`;
+pm2 restart api-dispatch dispatch-web`;
 
 function Upgrading() {
   return (
@@ -657,12 +538,8 @@ function Upgrading() {
     >
       <CodeBlock code={UPGRADE} lang="bash" className="max-w-3xl" />
       <P>
-        The restart is safe for your schedule: on boot the API runs a catch-up
-        sweep that fires any job whose <K>fireAt</K> passed while it was down,
-        then keeps a background sweep running every 15 seconds. Nothing is lost
-        in the restart window — though a quiet minute is still the considerate
-        time to do it. Check <K>pm2 logs</K> for the scheduler start line
-        afterwards.
+        The restart is safe for your schedule: on boot the API runs a catch-up sweep that fires any job whose <K>fireAt</K> passed while it was down, then keeps a background sweep running every 15 seconds. Nothing is
+        lost in the restart window — though a quiet minute is still the considerate time to do it. Check <K>pm2 logs</K> for the scheduler start line afterwards.
       </P>
     </DocSection>
   );
@@ -677,13 +554,8 @@ const LIMITATIONS: { name: string; body: React.ReactNode }[] = [
     name: "No HMAC signing yet",
     body: (
       <>
-        Deliveries are not signed, so your endpoint can&apos;t
-        cryptographically verify the sender. Use an unguessable token in
-        the webhook URL as an interim check — the pattern is in the{" "}
-        <a
-          href="/docs/using#code-examples"
-          className="text-amber-400 hover:underline"
-        >
+        Deliveries are not signed, so your endpoint can&apos;t cryptographically verify the sender. Use an unguessable token in the webhook URL as an interim check — the pattern is in the{" "}
+        <a href="/docs/using#code-examples" className="text-amber-400 hover:underline">
           Using Dispatch guide
         </a>
         .
@@ -694,10 +566,8 @@ const LIMITATIONS: { name: string; body: React.ReactNode }[] = [
     name: "Rate limiting is per-instance",
     body: (
       <>
-        The API rate-limits requests using in-process memory. On a single
-        instance that&apos;s exactly right. If you run multiple API replicas,
-        each enforces its own limit — wire in a shared store (e.g. Redis) for
-        a global one. Job firing itself is already safe across replicas.
+        The API rate-limits requests using in-process memory. On a single instance that&apos;s exactly right. If you run multiple API replicas, each enforces its own limit — wire in a shared store (e.g. Redis) for a
+        global one. Job firing itself is already safe across replicas.
       </>
     ),
   },
@@ -705,10 +575,7 @@ const LIMITATIONS: { name: string; body: React.ReactNode }[] = [
     name: "Email is required to sign up",
     body: (
       <>
-        Registration sends a verification code, so a working{" "}
-        <K>GMAIL_USER</K> / <K>GMAIL_APP_PASSWORD</K> pair must be configured
-        before anyone can create an account. There is no &quot;skip email&quot;
-        mode yet.
+        Registration sends a verification code, so a working <K>GMAIL_USER</K> / <K>GMAIL_APP_PASSWORD</K> pair must be configured before anyone can create an account. There is no &quot;skip email&quot; mode yet.
       </>
     ),
   },
@@ -727,14 +594,10 @@ function Limitations() {
         {LIMITATIONS.map((item, i) => (
           <div key={item.name} className="px-5 py-4">
             <div className="flex items-baseline gap-3">
-              <span className="font-mono text-[10px] tracking-wider text-zinc-700">
-                {String(i + 1).padStart(2, "0")}
-              </span>
+              <span className="font-mono text-[10px] tracking-wider text-zinc-700">{String(i + 1).padStart(2, "0")}</span>
               <h3 className="text-sm font-medium text-zinc-100">{item.name}</h3>
             </div>
-            <p className="mt-2 max-w-2xl text-[13px] leading-relaxed text-zinc-400">
-              {item.body}
-            </p>
+            <p className="mt-2 max-w-2xl text-[13px] leading-relaxed text-zinc-400">{item.body}</p>
           </div>
         ))}
       </Panel>
@@ -748,12 +611,7 @@ function Limitations() {
 
 export default function SelfHostingPage() {
   return (
-    <DocsShell
-      crumb="self-hosting"
-      title="Self-hosting Dispatch"
-      lead="Run the whole thing on your own server: install, configure, proxy, keep it alive, and upgrade without losing the schedule."
-      sections={SECTIONS}
-    >
+    <DocsShell crumb="self-hosting" title="Self-hosting Dispatch" lead="Run the whole thing on your own server: install, configure, proxy, keep it alive, and upgrade without losing the schedule." sections={SECTIONS}>
       <AgentPrompt
         title="Get AI help setting this up"
         description="Paste this into Claude, ChatGPT, or Gemini. It plays senior DevOps engineer: asks what's already on your server, walks you through one stage at a time, and debugs from your real output when something fails."

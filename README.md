@@ -45,10 +45,10 @@ curl -X POST https://api-dispatch.imtiyazsayyid.in/api/v1/jobs \
 
 A monorepo with two apps that deploy independently:
 
-| Folder | What it is | Port |
-| --- | --- | --- |
+| Folder                                 | What it is                                                             | Port |
+| -------------------------------------- | ---------------------------------------------------------------------- | ---- |
 | [`dispatch-backend`](dispatch-backend) | Express + TypeScript API and the scheduler. Prisma over MySQL/MariaDB. | 4000 |
-| [`dispatch-web`](dispatch-web) | Next.js dashboard, docs, and landing page. | 3000 |
+| [`dispatch-web`](dispatch-web)         | Next.js dashboard, docs, and landing page.                             | 3000 |
 
 ---
 
@@ -92,7 +92,7 @@ cp .env.example .env          # fill in the variables below
 npm install                   # runs prisma generate
 npx prisma migrate deploy
 npm run build
-pm2 start dist/src/index.js --name dispatch-api
+pm2 start dist/src/index.js --name api-dispatch
 
 # dashboard
 cd ../dispatch-web
@@ -132,21 +132,21 @@ Then add TLS with `sudo certbot --nginx`. The **full self-hosting guide** (singl
 
 **`dispatch-backend/.env`**
 
-| Variable | Required | Description |
-| --- | --- | --- |
-| `DATABASE_URL` | ✅ | MySQL/MariaDB connection string for Prisma. |
-| `GMAIL_USER` / `GMAIL_APP_PASSWORD` | ✅ | Gmail + App Password for verification & reset emails. |
-| `FRONTEND_URL` | ✅ | Public dashboard URL, used in password-reset links. |
-| `CORS_ORIGINS` | split-domain | Comma-separated browser origins allowed to call the API. |
-| `PORT` | — | API port (default `4000`). |
-| `TRUST_PROXY` | behind proxy | Set `true` behind nginx so rate limiting sees real client IPs. |
-| `ALLOW_PRIVATE_WEBHOOKS` | — | Set `true` to allow webhooks to private/internal addresses (off by default; SSRF guard). |
+| Variable                            | Required     | Description                                                                              |
+| ----------------------------------- | ------------ | ---------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                      | ✅           | MySQL/MariaDB connection string for Prisma.                                              |
+| `GMAIL_USER` / `GMAIL_APP_PASSWORD` | ✅           | Gmail + App Password for verification & reset emails.                                    |
+| `FRONTEND_URL`                      | ✅           | Public dashboard URL, used in password-reset links.                                      |
+| `CORS_ORIGINS`                      | split-domain | Comma-separated browser origins allowed to call the API.                                 |
+| `PORT`                              | —            | API port (default `4000`).                                                               |
+| `TRUST_PROXY`                       | behind proxy | Set `true` behind nginx so rate limiting sees real client IPs.                           |
+| `ALLOW_PRIVATE_WEBHOOKS`            | —            | Set `true` to allow webhooks to private/internal addresses (off by default; SSRF guard). |
 
 **`dispatch-web/.env.local`**
 
-| Variable | Required | Description |
-| --- | --- | --- |
-| `NEXT_PUBLIC_API_URL` | ✅ | Public origin of the API. Inlined at build time. |
+| Variable              | Required | Description                                      |
+| --------------------- | -------- | ------------------------------------------------ |
+| `NEXT_PUBLIC_API_URL` | ✅       | Public origin of the API. Inlined at build time. |
 
 ---
 
