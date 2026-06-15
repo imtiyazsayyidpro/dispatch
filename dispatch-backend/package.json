@@ -1,0 +1,36 @@
+{
+  "name": "dispatch-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "postinstall": "prisma generate",
+    "dev": "nodemon --exec tsx src/index.ts",
+    "build": "tsc && tsc-alias -f -fe .js",
+    "start": "node dist/src/index.js",
+    "seed": "npx tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/adapter-mariadb": "latest",
+    "@prisma/client": "^7.8.0",
+    "bcrypt": "latest",
+    "cors": "latest",
+    "dotenv": "latest",
+    "express": "latest",
+    "express-rate-limit": "^8.5.2",
+    "moment": "latest",
+    "nodemailer": "^9.0.0",
+    "prisma": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "latest",
+    "@types/cors": "latest",
+    "@types/express": "latest",
+    "@types/node": "latest",
+    "@types/nodemailer": "^8.0.1",
+    "nodemon": "latest",
+    "tsc-alias": "latest",
+    "tsx": "latest",
+    "typescript": "latest"
+  }
+}
