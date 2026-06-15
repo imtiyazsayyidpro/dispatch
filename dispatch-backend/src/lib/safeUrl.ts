@@ -104,7 +104,13 @@ export async function assertPublicWebhookUrl(rawUrl: string): Promise<void> {
     }
   }
 
-  if (addresses.length === 0 || addresses.some(isBlockedIp)) {
+  // No addresses isn't a private-address problem — it's a resolution failure
+  // (often transient). Report it accurately instead of as an SSRF block.
+  if (addresses.length === 0) {
+    throw new AppError('Webhook URL host could not be resolved', statusCodes.BAD_REQUEST);
+  }
+
+  if (addresses.some(isBlockedIp)) {
     throw new AppError('Webhook URL may not target a private address', statusCodes.BAD_REQUEST);
   }
 }
