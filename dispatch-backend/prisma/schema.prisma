@@ -103,7 +103,7 @@ model Job {
   id         String    @id @default(uuid())
   projectId  String
   title      String
-  webhookUrl String
+  webhookUrl String    @db.VarChar(2048)
   payload    Json?
   fireAt     DateTime
   status     JobStatus @default(SCHEDULED)

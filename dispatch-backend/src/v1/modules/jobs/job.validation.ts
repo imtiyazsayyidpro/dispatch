@@ -1,8 +1,11 @@
 import { z } from 'zod';
 
 export const createJobSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  webhookUrl: z.string().url('Invalid webhook URL'),
+  title: z.string().min(1, 'Title is required').max(191, 'Title is too long'),
+  webhookUrl: z
+    .string()
+    .url('Invalid webhook URL')
+    .max(2048, 'Webhook URL is too long (max 2048 characters)'),
   fireAt: z.string().datetime('Invalid datetime format, use ISO 8601'),
   payload: z.record(z.string(), z.any()).optional(),
 });
