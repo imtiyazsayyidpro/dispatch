@@ -93,13 +93,13 @@ async function createJob(
   return job;
 }
 
-async function cancelJob(userId: string, jobId: string) {
+async function cancelJob(projectId: string, jobId: string) {
   const job = await prisma.job.findFirst({
     where: { id: jobId },
-    include: { project: true },
   });
 
-  if (!job || job.project.userId !== userId) {
+  // Scoped to the API key's project — cancellation is API-key authenticated.
+  if (!job || job.projectId !== projectId) {
     throw new AppError('Job not found', statusCodes.NOT_FOUND);
   }
 

@@ -48,7 +48,7 @@ async function createJob(req: Request, res: Response, next: NextFunction) {
 
 async function cancelJob(req: Request, res: Response, next: NextFunction) {
   try {
-    await jobService.cancelJob(req.user.id, req.params.id as string);
+    await jobService.cancelJob(req.projectId, req.params.id as string);
     return sendResponse({
       res,
       status: true,

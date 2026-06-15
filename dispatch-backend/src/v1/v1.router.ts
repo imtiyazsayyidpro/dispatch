@@ -11,12 +11,17 @@ const v1Router = Router();
 
 v1Router.use('/auth', authRouter);
 
+// Jobs authenticate per-route — API key for POST/DELETE (developer-facing),
+// session for GET (dashboard). They must be mounted BEFORE the global session
+// gate below, or the global `authenticate` shadows the API-key endpoints and
+// external callers get "Unauthorized".
+v1Router.use('/jobs', jobRouter);
+
 v1Router.use(authenticate);
 v1Router.use('/me', meRouter);
 
 v1Router.use(requireOnboarding);
 v1Router.use('/projects', projectRouter);
 v1Router.use('/projects/:projectId/api-keys', apiKeyRouter);
-v1Router.use('/jobs', jobRouter);
 
 export default v1Router;
