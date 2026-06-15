@@ -3,7 +3,7 @@ import Link from "next/link";
 import { GitHubIcon } from "./github-icon";
 import { Logo } from "./logo";
 
-const GITHUB_URL = "https://github.com/imtiyazsayyid/dispatch";
+const GITHUB_URL = "https://github.com/imtiyazsayyidpro/dispatch";
 
 export function Footer() {
   return (
@@ -40,7 +40,7 @@ export function Footer() {
           <span className="text-sm text-zinc-500">
             Built by{" "}
             <a
-              href="https://github.com/imtiyazsayyid"
+              href="https://github.com/imtiyazsayyidpro"
               target="_blank"
               rel="noreferrer"
               className="text-zinc-300 transition-colors hover:text-zinc-100"

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { GitHubIcon } from "./github-icon";
 import { HeroTerminal } from "./hero-terminal";
 
-const GITHUB_URL = "https://github.com/imtiyazsayyid/dispatch";
+const GITHUB_URL = "https://github.com/imtiyazsayyidpro/dispatch";
 
 const EASE: [number, number, number, number] = [0.21, 0.65, 0.36, 1];
 

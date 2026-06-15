@@ -3,15 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "dotenv -e .env.local -- next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "dotenv -e .env.local -- next start",
     "lint": "eslint"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dotenv-cli": "^11.0.0",
     "framer-motion": "^12.40.0",
     "lucide-react": "^1.17.0",
     "next": "16.2.9",

@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { GitHubIcon } from "./github-icon";
 import { Logo } from "./logo";
 
-const GITHUB_URL = "https://github.com/imtiyazsayyid/dispatch";
+const GITHUB_URL = "https://github.com/imtiyazsayyidpro/dispatch";
 
 // Section links are absolute ("/#…") so the nav works from /docs too.
 const LINKS = [

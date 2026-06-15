@@ -4,7 +4,7 @@ import { GitHubIcon } from "./github-icon";
 import { Reveal } from "./reveal";
 import { Section } from "./section";
 
-const GITHUB_URL = "https://github.com/imtiyazsayyid/dispatch";
+const GITHUB_URL = "https://github.com/imtiyazsayyidpro/dispatch";
 
 export function OpenSource() {
   return (
@@ -60,20 +60,22 @@ export function OpenSource() {
                 <span className="text-zinc-600">$ </span>
                 <span className="text-zinc-300">git clone </span>
                 <span className="text-zinc-100">
-                  https://github.com/imtiyazsayyid/dispatch
+                  https://github.com/imtiyazsayyidpro/dispatch
                 </span>
               </div>
               <div>
                 <span className="text-zinc-600">$ </span>
-                <span className="text-zinc-300">cd dispatch</span>
+                <span className="text-zinc-300">
+                  cd dispatch-backend &amp;&amp; npm i &amp;&amp; npm run build
+                </span>
               </div>
               <div>
                 <span className="text-zinc-600">$ </span>
-                <span className="text-zinc-300">docker compose up -d</span>
+                <span className="text-zinc-300">pm2 start dist/src/index.js</span>
               </div>
               <div className="mt-2">
                 <span className="text-emerald-400">✓ dispatch ready</span>
-                <span className="text-zinc-500"> · listening on :8080</span>
+                <span className="text-zinc-500"> · API :4000 · dashboard :3000</span>
               </div>
               <div>
                 <span className="text-zinc-600">

@@ -40,44 +40,47 @@ function sectionIndex(id: string) {
 /* AI setup                                                            */
 /* ------------------------------------------------------------------ */
 
-const SETUP_PROMPT = `You are a senior DevOps engineer helping me self-host Dispatch, an open-source webhook scheduler (github.com/imtiyazsayyid/dispatch). Work conversationally: one stage at a time, confirm each stage works before moving to the next, and when something fails, debug it with me from my actual output before continuing.
+const SETUP_PROMPT = `You are a senior DevOps engineer helping me self-host Dispatch, an open-source webhook scheduler (github.com/imtiyazsayyidpro/dispatch). Work conversationally: one stage at a time, confirm each stage works before moving to the next, and when something fails, debug it with me from my actual output before continuing.
 
 My environment:
 - Server OS: {{SERVER_OS}}
 - Notes about my setup: {{SETUP_NOTES}}
 
 ## What Dispatch is
-Two Node.js apps in one repo, plus MySQL:
-- scheduler-backend — Express API and the scheduler itself; in-memory job timers; listens on port 4000 by default
-- scheduler-web — Next.js dashboard; listens on port 3000
-Target production layout: both processes under PM2, nginx in front with path-based routing on one domain (/api/* to :4000, everything else to :3000), TLS via certbot.
+Two Node.js apps in one repo, plus MySQL/MariaDB:
+- dispatch-backend — Express API and the scheduler itself; listens on port 4000 by default. The scheduler is DB-backed: it claims each job atomically before firing and runs a self-healing sweep, so missed jobs are caught up after downtime.
+- dispatch-web — Next.js dashboard; listens on port 3000
+Target production layout: both processes under PM2, nginx in front. The default is one domain with path-based routing (/api/* to :4000, everything else to :3000); separate domains for the API and dashboard also work (see the CORS note below). TLS via certbot.
 
 ## Ground rules for you
-- Start with preflight questions about what I already have: Node version (20+ required), MySQL 8+ (installed? can I create databases?), whether DNS already points a domain at this server, whether ports 80/443 are open, and whether nginx and PM2 are already installed.
+- Start with preflight questions about what I already have: Node version (20+ required), MySQL 8+ / MariaDB (installed? can I create databases?), whether DNS already points a domain at this server, whether ports 80/443 are open, whether nginx and PM2 are installed, and whether I have a Gmail account with an App Password for transactional email (Dispatch sends a verification code on signup, so email must be configured or registration fails).
 - Give one stage at a time with exact commands for my OS, then wait for me to confirm or paste output before continuing.
 - When I paste an error, diagnose from the actual text — do not guess ahead or dump the remaining stages.
 - Tell me when a command needs sudo and why. Prefer boring, reversible steps.
-- NEVER suggest running more than one instance of scheduler-backend — no PM2 cluster mode, no second replica behind a load balancer. Job timers live in process memory; two instances would fire every webhook twice.
 
 ## The stages
-1. Preflight — versions, MySQL, DNS, open ports, existing nginx/PM2.
-2. Database — create a "dispatch" database and a dedicated MySQL user with rights on it.
-3. The API — git clone the repo; create scheduler-backend/.env with exactly two variables:
-     PORT=4000
-     DATABASE_URL=mysql://USER:PASSWORD@localhost:3306/dispatch
-   then: npm install && npx prisma migrate deploy && npm run build
-4. The dashboard — create scheduler-web/.env.local with exactly one variable:
-     NEXT_PUBLIC_API_URL=https://MY-DOMAIN
-   (same origin as the dashboard because of path routing; no trailing slash, no /api/v1 suffix; it is inlined at build time, so it must be set BEFORE npm run build, and changing it later requires a rebuild)
+1. Preflight — versions, MySQL/MariaDB, DNS, open ports, existing nginx/PM2, Gmail App Password.
+2. Database — create a "dispatch" database and a dedicated user with rights on it.
+3. The API — git clone the repo; create dispatch-backend/.env (copy from .env.example). The important variables:
+     DATABASE_URL=mysql://USER:PASSWORD@localhost:3306/dispatch   (required)
+     GMAIL_USER + GMAIL_APP_PASSWORD                              (required — signup sends a code)
+     FRONTEND_URL=https://MY-DASHBOARD-URL                        (used in password-reset links)
+     CORS_ORIGINS=https://MY-DASHBOARD-URL                        (only if the dashboard is on a different origin)
+     TRUST_PROXY=true                                            (it runs behind nginx)
+   then: npm install (auto-runs prisma generate) && npx prisma migrate deploy && npm run build
+4. The dashboard — create dispatch-web/.env.local with one variable:
+     NEXT_PUBLIC_API_URL=https://MY-API-URL
+   (with single-domain path routing this is the same origin as the dashboard; with split domains it's the API's domain. No trailing slash, no /api/v1 suffix; it is inlined at build time, so set it BEFORE npm run build, and changing it later needs a rebuild)
    then: npm install && npm run build
-5. PM2 — ecosystem.config.js at the repo root declaring both apps with instances: 1 and exec_mode "fork"; pm2 start ecosystem.config.js, pm2 save, pm2 startup.
-6. nginx — one server block for MY-DOMAIN: location /api/ proxies to 127.0.0.1:4000 (the API serves everything under /api/v1, and longest-prefix match means this block wins), location / proxies to 127.0.0.1:3000. nginx -t, reload, then certbot --nginx for TLS.
-7. Verify end-to-end — register at https://MY-DOMAIN, create a project and an API key in the dashboard, schedule a test job with curl set to fire two minutes out, and watch it flip SCHEDULED → FIRING → SUCCESS in the dashboard.
+5. PM2 — ecosystem.config.js at the repo root declaring both apps; pm2 start ecosystem.config.js, pm2 save, pm2 startup.
+6. nginx — single domain: location /api/ proxies to 127.0.0.1:4000, location / proxies to 127.0.0.1:3000. (Split domains: one server block per domain instead.) nginx -t, reload, then certbot --nginx for TLS.
+7. Verify end-to-end — register at the dashboard, confirm the verification email arrives, create a project and an API key, schedule a test job with curl set to fire two minutes out, and watch it flip SCHEDULED → FIRING → SUCCESS.
 
-## Known limitations to keep in mind while advising me
-- If the API process is down when a job's fireAt passes, that job is never fired retroactively — boot-time rehydration only re-arms future-dated jobs. Restarts should be quick and deliberate.
-- Webhook deliveries currently have no explicit timeout and are not HMAC-signed — flag this if I describe anything security-sensitive.
-- Single-server only: there is no distributed mode.
+## Good to know while advising me
+- The scheduler survives restarts: on boot it catches up any jobs that came due during downtime, and a background sweep re-checks every 15s. Webhook calls have a 30s timeout; failed deliveries retry on a 30s → 1m → 5m backoff that also survives restarts.
+- Running more than one API instance is safe — jobs are claimed atomically, so they are never double-fired. The one caveat: rate limiting is in-memory per instance, so a shared store (e.g. Redis) is needed if you want global limits across replicas.
+- Webhook deliveries are not HMAC-signed yet — flag this if I describe anything security-sensitive.
+- By default the API blocks webhooks aimed at private/internal addresses (SSRF guard). If I deliberately want to hit services inside my network, set ALLOW_PRIVATE_WEBHOOKS=true.
 
 Start now with the preflight questions. Keep each message short and practical.`;
 
@@ -102,7 +105,10 @@ function Overview() {
           <ul className="mt-3 space-y-2 text-[13px] leading-relaxed text-zinc-400">
             <li>The full product, MIT-licensed — not a gutted community edition</li>
             <li>Every job, payload, and delivery log in your own database</li>
-            <li>Webhooks that can reach services inside your network</li>
+            <li>
+              Webhooks that can reach services inside your network — opt in with{" "}
+              <K>ALLOW_PRIVATE_WEBHOOKS</K>
+            </li>
             <li>No usage limits beyond what your server can do</li>
           </ul>
         </Panel>
@@ -111,16 +117,9 @@ function Overview() {
             what you own
           </p>
           <ul className="mt-3 space-y-2 text-[13px] leading-relaxed text-zinc-400">
-            <li>
-              Uptime — if the API process is down at <K>fireAt</K>, that
-              job never fires (see{" "}
-              <a href="#limitations" className="text-amber-400 hover:underline">
-                limitations
-              </a>
-              )
-            </li>
             <li>Database backups and credentials</li>
             <li>TLS, DNS, and the reverse proxy in front</li>
+            <li>An SMTP/Gmail account for transactional email</li>
             <li>Applying upgrades and their migrations</li>
           </ul>
         </Panel>
@@ -139,16 +138,16 @@ const PREREQS: { name: string; note: React.ReactNode }[] = [
     note: "Runs both the API and the dashboard. The scheduler relies on modern fetch, which ships with Node 18+, but 20 is the supported floor.",
   },
   {
-    name: "MySQL 8+",
+    name: "MySQL 8+ or MariaDB",
     note: "The only datastore. Prisma manages the schema; you manage the backups.",
   },
   {
-    name: "A server",
-    note: "Any VPS works — Dispatch is two Node processes and idle timers, not a resource hog. One box is the supported topology.",
+    name: "A Gmail App Password",
+    note: "Dispatch emails a verification code on signup and links for password resets, so transactional email must be configured. A Gmail account with a 16-character App Password is the path of least resistance.",
   },
   {
-    name: "nginx + PM2 familiarity",
-    note: "The production setup below assumes you can edit an nginx site config and read pm2 status output. Nothing deeper.",
+    name: "A server with nginx + PM2",
+    note: "Any VPS works — Dispatch is two Node processes and a light DB poll, not a resource hog. The production setup assumes you can edit an nginx site config and read pm2 status output.",
   },
 ];
 
@@ -183,19 +182,35 @@ function Prerequisites() {
 /* 03 · Installation                                                   */
 /* ------------------------------------------------------------------ */
 
-const INSTALL_CLONE = `git clone https://github.com/imtiyazsayyid/dispatch
+const INSTALL_CLONE = `git clone https://github.com/imtiyazsayyidpro/dispatch
 cd dispatch`;
 
-const INSTALL_BACKEND_ENV = `# scheduler-backend/.env
+const INSTALL_BACKEND_ENV = `# dispatch-backend/.env
+
+# MySQL/MariaDB connection string — used by Prisma at runtime and for
+# migrations. Format: mysql://USER:PASSWORD@HOST:PORT/DATABASE
+DATABASE_URL=mysql://dispatch:change-me@localhost:3306/dispatch
 
 # Port the API listens on — keep in sync with the nginx upstream below.
 PORT=4000
 
-# MySQL connection string, used by Prisma at runtime and for migrations.
-# Format: mysql://USER:PASSWORD@HOST:PORT/DATABASE
-DATABASE_URL=mysql://dispatch:change-me@localhost:3306/dispatch`;
+# Transactional email. Signup sends a verification code, so these are
+# required. GMAIL_APP_PASSWORD is a 16-char App Password, not your login:
+# https://myaccount.google.com/apppasswords
+GMAIL_USER=you@gmail.com
+GMAIL_APP_PASSWORD=xxxxxxxxxxxxxxxx
 
-const INSTALL_WEB_ENV = `# scheduler-web/.env.local
+# Public URL of the dashboard — used to build password-reset links.
+FRONTEND_URL=https://dispatch.example.com
+
+# Only needed if the dashboard is served from a DIFFERENT origin than the
+# API (split-domain setup). Comma-separated list of allowed browser origins.
+CORS_ORIGINS=https://dispatch.example.com
+
+# It runs behind nginx, so trust the proxy for real client IPs (rate limiting).
+TRUST_PROXY=true`;
+
+const INSTALL_WEB_ENV = `# dispatch-web/.env.local
 
 # Public origin of the Dispatch API — the browser calls it directly.
 # With the path-routed nginx setup below, it's the same origin as the
@@ -204,13 +219,13 @@ const INSTALL_WEB_ENV = `# scheduler-web/.env.local
 NEXT_PUBLIC_API_URL=https://dispatch.example.com`;
 
 const INSTALL_BUILD = `# the API
-cd scheduler-backend
-npm install
+cd dispatch-backend
+npm install                 # also runs 'prisma generate' (postinstall)
 npx prisma migrate deploy   # creates/updates the schema in MySQL
 npm run build
 
 # the dashboard
-cd ../scheduler-web
+cd ../dispatch-web
 npm install
 npm run build               # NEXT_PUBLIC_API_URL must be set by now`;
 
@@ -221,7 +236,7 @@ function Installation() {
       id="installation"
       eyebrow="installation"
       title="Clone, configure, migrate, build"
-      lead="The repo holds both apps side by side: scheduler-backend (the API and scheduler) and scheduler-web (the dashboard)."
+      lead="The repo holds both apps side by side: dispatch-backend (the API and scheduler) and dispatch-web (the dashboard)."
     >
       <div className="space-y-3">
         <p className="font-mono text-[10px] tracking-[0.2em] text-zinc-600 uppercase">
@@ -236,8 +251,8 @@ function Installation() {
         </p>
         <P>
           Create a MySQL database (and ideally a dedicated user), then copy{" "}
-          <K>.env.example</K> to <K>.env</K> and fill it in. Both variables
-          are documented in the{" "}
+          <K>.env.example</K> to <K>.env</K> and fill it in. Every variable is
+          documented in the{" "}
           <a href="#env-reference" className="text-amber-400 hover:underline">
             reference
           </a>{" "}
@@ -246,7 +261,7 @@ function Installation() {
         <CodeBlock
           code={INSTALL_BACKEND_ENV}
           lang="ini"
-          title="scheduler-backend/.env"
+          title="dispatch-backend/.env"
           className="max-w-3xl"
         />
       </div>
@@ -258,7 +273,7 @@ function Installation() {
         <CodeBlock
           code={INSTALL_WEB_ENV}
           lang="ini"
-          title="scheduler-web/.env.local"
+          title="dispatch-web/.env.local"
           className="max-w-3xl"
         />
       </div>
@@ -282,17 +297,17 @@ module.exports = {
   apps: [
     {
       name: "dispatch-api",
-      cwd: "./scheduler-backend",
+      cwd: "./dispatch-backend",
       script: "npm",
       args: "start",
-      instances: 1,          // never more — timers live in process memory
-      exec_mode: "fork",     // never cluster, for the same reason
+      instances: 1,          // one box needs only one; safe to scale (see below)
+      exec_mode: "fork",
       autorestart: true,
       env: { NODE_ENV: "production" },
     },
     {
       name: "dispatch-web",
-      cwd: "./scheduler-web",
+      cwd: "./dispatch-web",
       script: "npm",
       args: "start",
       instances: 1,
@@ -329,12 +344,14 @@ function Production() {
       />
       <CodeBlock code={PM2_START} lang="bash" className="max-w-3xl" />
 
-      <Callout tone="warn" legend="one api process, always" className="max-w-3xl">
-        Job timers live in the API process&apos;s memory. Run exactly one
-        instance of <K>dispatch-api</K> — never PM2 cluster mode, never a
-        second replica behind a load balancer. Two instances would each arm
-        timers for the same jobs and fire your webhooks twice. The
-        dashboard, by contrast, is stateless; scale it if you ever need to.
+      <Callout tone="info" legend="scaling the api" className="max-w-3xl">
+        One API instance is plenty for a single box, but Dispatch is safe to
+        scale: every job is claimed atomically (<K>SCHEDULED → FIRING</K> in a
+        single conditional update) before it fires, so two instances will never
+        double-send a webhook. The only caveat is that rate limiting is
+        in-memory per process — add a shared store (e.g. Redis) if you want
+        limits enforced globally across replicas. The dashboard is stateless;
+        scale it freely.
       </Callout>
     </DocSection>
   );
@@ -361,6 +378,7 @@ server {
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
@@ -370,6 +388,7 @@ server {
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 }`;
@@ -387,7 +406,7 @@ function ReverseProxy() {
       id="reverse-proxy"
       eyebrow="reverse proxy"
       title="nginx in front of both"
-      lead="The dashboard's browser code calls the API directly, so both have to be publicly reachable. Path-based routing puts them behind one domain."
+      lead="The dashboard's browser code calls the API directly, so both have to be publicly reachable. Path-based routing puts them behind one domain — the simplest option, and it sidesteps CORS entirely."
     >
       <CodeBlock
         code={NGINX_CONF}
@@ -400,8 +419,17 @@ function ReverseProxy() {
         Because the API is reached at the same origin as the dashboard,{" "}
         <K>NEXT_PUBLIC_API_URL</K> is simply{" "}
         <K>https://dispatch.example.com</K> — the web app appends{" "}
-        <K>/api/v1/…</K> paths itself.
+        <K>/api/v1/…</K> paths itself, and same-origin requests need no CORS
+        config.
       </P>
+      <Callout tone="info" legend="prefer separate domains?" className="max-w-3xl">
+        You can instead give the API and dashboard their own domains (e.g.{" "}
+        <K>api.example.com</K> and <K>app.example.com</K>) with a server block
+        each. Two extra steps then matter: set{" "}
+        <K>NEXT_PUBLIC_API_URL</K> to the API&apos;s domain, and list the
+        dashboard&apos;s origin in <K>CORS_ORIGINS</K> on the API — otherwise
+        the browser blocks the cross-origin calls.
+      </Callout>
     </DocSection>
   );
 }
@@ -417,21 +445,54 @@ function EnvReference() {
       id="env-reference"
       eyebrow="environment variables"
       title="Every variable"
-      lead="Three variables run the whole thing. Anything else you find in an env file is not read by Dispatch."
+      lead="The API reads a handful; the dashboard reads one. Anything else you find in an env file is not read by Dispatch."
     >
-      <FieldList title="scheduler-backend/.env">
+      <FieldList title="dispatch-backend/.env">
+        <Field name="DATABASE_URL" type="string · mysql url" required>
+          MySQL/MariaDB connection string, used by Prisma at runtime and by{" "}
+          <K>prisma migrate</K>. Example:{" "}
+          <K>mysql://dispatch:secret@localhost:3306/dispatch</K>
+        </Field>
         <Field name="PORT" type="number · default 4000">
           Port the API listens on. Keep it in sync with the nginx upstream.
           Example: <K>4000</K>
         </Field>
-        <Field name="DATABASE_URL" type="string · mysql url" required>
-          MySQL connection string, used by Prisma at runtime and by{" "}
-          <K>prisma migrate</K>. Example:{" "}
-          <K>mysql://dispatch:secret@localhost:3306/dispatch</K>
+        <Field name="GMAIL_USER" type="string · email" required>
+          Gmail address that sends verification codes and reset links. Signup
+          fails without working email. Example: <K>you@gmail.com</K>
+        </Field>
+        <Field name="GMAIL_APP_PASSWORD" type="string" required>
+          A 16-character Google{" "}
+          <a
+            href="https://myaccount.google.com/apppasswords"
+            className="text-amber-400 hover:underline"
+          >
+            App Password
+          </a>{" "}
+          — not your normal account password.
+        </Field>
+        <Field name="FRONTEND_URL" type="string · url" required>
+          Public origin of the dashboard, used to build links inside emails
+          (password reset). Example: <K>https://dispatch.example.com</K>
+        </Field>
+        <Field name="CORS_ORIGINS" type="string · csv">
+          Comma-separated browser origins allowed to call the API. Only needed
+          when the dashboard is on a different origin than the API; localhost is
+          auto-allowed in development. Example:{" "}
+          <K>https://dispatch.example.com</K>
+        </Field>
+        <Field name="TRUST_PROXY" type="boolean · default off">
+          Set <K>true</K> when behind a reverse proxy so rate limiting and logs
+          use the real client IP from <K>X-Forwarded-For</K>.
+        </Field>
+        <Field name="ALLOW_PRIVATE_WEBHOOKS" type="boolean · default off">
+          When unset, the API blocks webhooks pointed at private/internal
+          addresses (an SSRF guard). Set <K>true</K> only if you intentionally
+          fire at services inside your own network.
         </Field>
       </FieldList>
 
-      <FieldList title="scheduler-web/.env.local">
+      <FieldList title="dispatch-web/.env.local">
         <Field name="NEXT_PUBLIC_API_URL" type="string · origin" required>
           Public origin the browser uses to reach the API — with the
           path-routed nginx setup, the same origin as the dashboard. No
@@ -452,14 +513,14 @@ const LOCAL_DEV = `# 1 · database
 mysql -u root -e "CREATE DATABASE dispatch"
 
 # 2 · the API — terminal one
-cd scheduler-backend
-npm install
-cp .env.example .env        # point DATABASE_URL at your MySQL
+cd dispatch-backend
+npm install                 # also runs prisma generate
+cp .env.example .env        # point DATABASE_URL at your MySQL, set GMAIL_*
 npx prisma migrate dev
 npm run dev                 # http://localhost:4000, hot-reloads
 
 # 3 · the dashboard — terminal two
-cd scheduler-web
+cd dispatch-web
 npm install
 echo "NEXT_PUBLIC_API_URL=http://localhost:4000" > .env.local
 npm run dev                 # http://localhost:3000`;
@@ -511,16 +572,18 @@ function LocalDevelopment() {
           <strong className="font-medium text-zinc-200">
             Dispatch running locally too?
           </strong>{" "}
-          No tunnel needed. The scheduler fires from the backend process on
-          your machine, so <K>http://localhost:5000/hooks/test</K> works as
-          a <K>webhookUrl</K> directly.
+          The scheduler fires from the backend process on your machine, so{" "}
+          <K>http://localhost:5000/hooks/test</K> works as a <K>webhookUrl</K>{" "}
+          directly — but note that loopback and private addresses are blocked
+          by default, so set <K>ALLOW_PRIVATE_WEBHOOKS=true</K> in your local{" "}
+          <K>.env</K> first.
         </P>
         <P>
           <strong className="font-medium text-zinc-200">
             Dispatch hosted somewhere else?
           </strong>{" "}
           It can&apos;t reach your localhost — you need a tunnel. ngrok is
-          the standard move:
+          the standard move (and its public URL passes the SSRF guard):
         </P>
         <CodeBlock code={NGROK_SETUP} lang="bash" className="max-w-3xl" />
         <CodeBlock
@@ -553,8 +616,8 @@ function LocalDevelopment() {
           </li>
           <li>
             Deliveries that failed while your tunnel was down are retried
-            on the normal 30s → 1m backoff, so a quick tunnel restart often
-            catches the retry.
+            on the normal 30s → 1m → 5m backoff, so a quick tunnel restart
+            often catches the retry.
           </li>
         </ul>
       </Callout>
@@ -570,13 +633,13 @@ const UPGRADE = `cd dispatch
 git pull
 
 # the API
-cd scheduler-backend
+cd dispatch-backend
 npm install
 npx prisma migrate deploy   # applies any new migrations; safe to re-run
 npm run build
 
 # the dashboard
-cd ../scheduler-web
+cd ../dispatch-web
 npm install
 npm run build
 
@@ -594,15 +657,12 @@ function Upgrading() {
     >
       <CodeBlock code={UPGRADE} lang="bash" className="max-w-3xl" />
       <P>
-        On boot the API re-arms every future-dated <K>SCHEDULED</K> job
-        from the database, so scheduled work survives the restart. But jobs
-        whose <K>fireAt</K> lands <em>inside</em> the restart window are
-        missed (see{" "}
-        <a href="#limitations" className="text-amber-400 hover:underline">
-          limitations
-        </a>
-        ) — upgrade in a quiet minute and check <K>pm2 logs</K> for the
-        rehydration line afterwards.
+        The restart is safe for your schedule: on boot the API runs a catch-up
+        sweep that fires any job whose <K>fireAt</K> passed while it was down,
+        then keeps a background sweep running every 15 seconds. Nothing is lost
+        in the restart window — though a quiet minute is still the considerate
+        time to do it. Check <K>pm2 logs</K> for the scheduler start line
+        afterwards.
       </P>
     </DocSection>
   );
@@ -613,29 +673,6 @@ function Upgrading() {
 /* ------------------------------------------------------------------ */
 
 const LIMITATIONS: { name: string; body: React.ReactNode }[] = [
-  {
-    name: "Downtime means missed fires",
-    body: (
-      <>
-        Rehydration on boot only re-arms jobs whose <K>fireAt</K> is still
-        in the future. A job that came due while the process was down is
-        never fired retroactively — it stays <K>SCHEDULED</K> in the
-        dashboard forever. Catch-up delivery is a known gap; keep the API
-        process running.
-      </>
-    ),
-  },
-  {
-    name: "No explicit delivery timeout",
-    body: (
-      <>
-        The webhook request has no timeout of its own — it waits as long as
-        Node&apos;s default fetch limits allow (several minutes). A slow
-        endpoint ties up the attempt for that long. A strict timeout is
-        planned; until then, respond fast.
-      </>
-    ),
-  },
   {
     name: "No HMAC signing yet",
     body: (
@@ -654,12 +691,24 @@ const LIMITATIONS: { name: string; body: React.ReactNode }[] = [
     ),
   },
   {
-    name: "Single server only",
+    name: "Rate limiting is per-instance",
     body: (
       <>
-        There is no distributed lock. Timers live in one process&apos;s
-        memory, and two API instances would each fire the same jobs —
-        doubling every webhook. One instance, fork mode, exactly one box.
+        The API rate-limits requests using in-process memory. On a single
+        instance that&apos;s exactly right. If you run multiple API replicas,
+        each enforces its own limit — wire in a shared store (e.g. Redis) for
+        a global one. Job firing itself is already safe across replicas.
+      </>
+    ),
+  },
+  {
+    name: "Email is required to sign up",
+    body: (
+      <>
+        Registration sends a verification code, so a working{" "}
+        <K>GMAIL_USER</K> / <K>GMAIL_APP_PASSWORD</K> pair must be configured
+        before anyone can create an account. There is no &quot;skip email&quot;
+        mode yet.
       </>
     ),
   },
@@ -719,7 +768,7 @@ export default function SelfHostingPage() {
           {
             key: "SETUP_NOTES",
             label: "anything specific · optional",
-            placeholder: "MySQL already running; domain is dispatch.acme.dev",
+            placeholder: "MariaDB already running; domain is dispatch.acme.dev",
           },
         ]}
       />

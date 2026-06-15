@@ -73,7 +73,7 @@ const FEATURES: Feature[] = [
     title: "Yours to run",
     description:
       "The whole service is open source under MIT. If scheduling has to live inside your infrastructure, run it there — same code, your box.",
-    artifact: <span className="text-zinc-400">$ docker compose up -d</span>,
+    artifact: <span className="text-zinc-400">$ clone · build · pm2 start</span>,
   },
 ];
 
