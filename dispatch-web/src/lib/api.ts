@@ -1,6 +1,7 @@
 const TOKEN_KEY = "dispatch_token";
 
 /** Backend envelope — every response is `{ status, message, data }`. */
+// Test Comment
 interface ApiEnvelope<T> {
   status: boolean;
   message: string;
@@ -12,7 +13,7 @@ export class ApiError extends Error {
     message: string,
     public readonly statusCode: number,
     /** The error envelope's `data` payload, when the server sent one. */
-    public readonly data: unknown = null
+    public readonly data: unknown = null,
   ) {
     super(message);
     this.name = "ApiError";
@@ -32,11 +33,7 @@ export function clearToken() {
   window.localStorage.removeItem(TOKEN_KEY);
 }
 
-async function request<T>(
-  method: "GET" | "POST" | "PUT" | "DELETE",
-  path: string,
-  body?: unknown
-): Promise<T> {
+async function request<T>(method: "GET" | "POST" | "PUT" | "DELETE", path: string, body?: unknown): Promise<T> {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!baseUrl) {
     throw new ApiError("NEXT_PUBLIC_API_URL is not configured", 0);
@@ -66,11 +63,7 @@ async function request<T>(
   }
 
   if (!response.ok || !envelope?.status) {
-    throw new ApiError(
-      envelope?.message ?? `Request failed (${response.status})`,
-      response.status,
-      envelope?.data ?? null
-    );
+    throw new ApiError(envelope?.message ?? `Request failed (${response.status})`, response.status, envelope?.data ?? null);
   }
 
   return envelope.data;
